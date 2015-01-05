@@ -1,11 +1,11 @@
 local class = require("extlibs.middleclass")
 BayesClassifier = class('BayesClassifier')
 
-function BayesClassifier:initialize(m, p, attrCount, classCount)
-  self.m = m
-  self.p = p
+function BayesClassifier:initialize(attrCount, classCount)
   self.attrCount = attrCount
   self.classCount = classCount
+  self.m = 2.0
+  self.p = 0.5
 end
 
 function BayesClassifier:classify(trainingData, testData)
@@ -14,8 +14,6 @@ function BayesClassifier:classify(trainingData, testData)
 
   --Calculate the probability for each classification in the training data.
   for classification, trainSet in pairs(trainingData) do
-    --print("Calculating "..classification.." probability.")
-
     probabilities[classification] = 1.0
     local matches = {}
 
@@ -30,8 +28,6 @@ function BayesClassifier:classify(trainingData, testData)
 
       probabilities[classification] =
       probabilities[classification] * ((matches[attr] + (self.m * self.p))/(self.classCount + self.m))
-
-      --print("attr = "..testData[attr]..", matches = "..matches[attr]..", probability = "..(matches[attr] + (self.m * self.p))/(self.classCount + self.m))
     end
   end
 

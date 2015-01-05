@@ -4,96 +4,109 @@ require("Fighter")
 PlayerFighter = class('PlayerFighter', Fighter)
 
 function PlayerFighter:initialize(positionX, positionY, health, stamina)
+  --Initialize base class.
   Fighter.initialize(self, positionX, positionY, health, stamina)
 
-  self.direction = "right"
+  --Setup animations
+  self.anim["idle"]         = newAnimation(love.graphics.newImage("resources/player/idle.png"), 128, 256, 1, 0)
+  self.anim["walk"]         = newAnimation(love.graphics.newImage("resources/player/walk.png"), 128, 256, 0.15, 0)
+  self.anim["crouch"]       = newAnimation(love.graphics.newImage("resources/player/crouch.png"), 128, 256, 0.1, 0)
+  self.anim["block"]        = newAnimation(love.graphics.newImage("resources/player/block.png"), 128, 256, 1, 0)
+  self.anim["crouchBlock"]  = newAnimation(love.graphics.newImage("resources/player/crouchBlock.png"), 128, 256, 1, 0)
+  self.anim["jump"]         = newAnimation(love.graphics.newImage("resources/player/jump.png"), 128, 256, 0.25, 0)
+  self.anim["jab"]          = newAnimation(love.graphics.newImage("resources/player/jab.png"), 128, 256, 0.15, 0)
+  self.anim["crouchJab"]    = newAnimation(love.graphics.newImage("resources/player/crouchJab.png"), 128, 256, 0.15, 0)
+  self.anim["hook"]         = newAnimation(love.graphics.newImage("resources/player/hook.png"), 128, 256, 0.2, 0)
+  self.anim["crouchHook"]   = newAnimation(love.graphics.newImage("resources/player/crouchHook.png"), 128, 256, 0.15, 0)
+  self.anim["strike"]       = newAnimation(love.graphics.newImage("resources/player/strike.png"), 128, 256, 0.15, 0)
+  self.anim["crouchStrike"] = newAnimation(love.graphics.newImage("resources/player/crouchStrike.png"), 128, 256, 0.15, 0)
+  self.anim["dmg"]          = newAnimation(love.graphics.newImage("resources/player/dmg.png"), 128, 256, 0.1, 0)
+  self.anim["crouchDmg"]    = newAnimation(love.graphics.newImage("resources/player/crouchDmg.png"), 128, 256, 0.1, 0)
+  self.anim["death"]        = newAnimation(love.graphics.newImage("resources/player/death.png"), 256, 256, 0.1, 0)
 
-  self.anim["idle"] = newAnimation(love.graphics.newImage("resources/player/idle.png"), 128, 256, 1, 0)
-  self.anim["walk"] = newAnimation(love.graphics.newImage("resources/player/walk.png"), 128, 256, 0.15, 0)
-  self.anim["crouch"] = newAnimation(love.graphics.newImage("resources/player/crouch.png"), 128, 256, 0.1, 0)
-
-  self.anim["block"] = newAnimation(love.graphics.newImage("resources/player/block.png"), 128, 256, 1, 0)
-  self.anim["blockLow"] = newAnimation(love.graphics.newImage("resources/player/blockLow.png"), 128, 256, 1, 0)
-
-  self.anim["jump"] = newAnimation(love.graphics.newImage("resources/player/jump.png"), 128, 256, 0.25, 0)
   self.anim["jump"]:setMode("once")
-
-  self.anim["jab"] = newAnimation(love.graphics.newImage("resources/player/jab.png"), 128, 256, 0.15, 0)
   self.anim["jab"]:setMode("once")
-
-  self.anim["hook"] = newAnimation(love.graphics.newImage("resources/player/hook.png"), 128, 256, 0.15, 0)
   self.anim["hook"]:setMode("once")
-
-  self.anim["strike"] = newAnimation(love.graphics.newImage("resources/player/strike.png"), 128, 256, 0.15, 0)
   self.anim["strike"]:setMode("once")
+  self.anim["dmg"]:setMode("once")
+  self.anim["crouchDmg"]:setMode("once")
+  self.anim["death"]:setMode("once")
 end
 
 function PlayerFighter:update(dt)
+  --Call base update.
+  Fighter.update(self, dt)
+
   --Movement.
   if love.keyboard.isDown("left") then
     if self.action == "idle" then
-      self.action = "walk"
-      self.direction = "left"
-    elseif self.action ~= "walk" then
-      self.direction = "left"
+      self.nextAction = "walk"
     end
+    self.direction = "left"
   elseif love.keyboard.isDown("right") then
     if self.action == "idle" then
-      self.action = "walk"
-      self.direction = "right"
-    elseif self.action ~= "walk" then
-      self.direction = "right"
+      self.nextAction = "walk"
     end
+    self.direction = "right"
   end
 
   --Crouch and blocking.
   if love.keyboard.isDown("down") and love.keyboard.isDown("lctrl") then
-    if self.action == "idle" or self.action == "crouch" or self.action == "block" then
-      self.action = "blockLow"
-    end
+      self.nextAction = "crouchBlock"
   elseif love.keyboard.isDown("lctrl") then
-    if self.action == "idle" or self.action == "crouch" or self.action == "blockLow" then
-      self.action = "block"
-    end
+      self.nextAction = "block"
   elseif love.keyboard.isDown("down") then
-    if self.action == "idle" or self.action == "block" or self.action == "blockLow" then
-      self.action = "crouch"
-    end
-  elseif self.action == "crouch" or self.action == "block" or self.action == "blockLow" then
-    self.action = "idle"
+      self.nextAction = "crouch"
   end
-
-  Fighter.update(self, dt)
 end
 
 function PlayerFighter:keyreleased(key)
+  --Stop movement.
   if key == "left" or key == "right" then
-    if self.action == "walk" then
-      self.action = "idle"
+    self.nextAction = "idle"
+  end
+
+  if key == "-" then
+    ai.hp = ai.hp - 5
+  elseif key == "=" then
+    ai.hp = ai.hp + 5
+  end
+
+  if key == "[" then
+    ai.sp = ai.sp - 5
+  elseif key == "]" then
+    ai.sp = ai.sp + 5
+  end
+
+  --Stop crouching.
+  if key == "down" then
+    if love.keyboard.isDown("lctrl") then
+      self.nextAction = "block"
+    else
+      self.nextAction = "idle"
     end
   end
 
-  if key == "a" and self.action ~= "hook" and self.action ~= "strike" and self.sp >= 10 then
-    self.sp = self.sp - 10
-    self.action = "jab"
-  elseif key == "s" and self.action ~= "jab" and self.action ~= "strike" and self.sp >= 30 then
-    self.sp = self.sp - 20
-    self.action = "hook"
-  elseif key == "d" and self.action ~= "jab" and self.action ~= "hook" and self.sp >= 60 then
-    self.sp = self.sp - 40
-    self.action = "strike"
+  --Stop blocking.
+  if key == "lctrl" then
+    if love.keyboard.isDown("down") then
+      self.nextAction = "crouch"
+    else
+      self.nextAction = "idle"
+    end
   end
 
+  --Attacks
+  if key == "z" then
+    self.nextAction = "jab"
+  elseif key == "x" then
+    self.nextAction = "hook"
+  elseif key == "c" then
+    self.nextAction = "strike"
+  end
+
+  --Jump
   if key == "up" then
-    if self.action ~= "jump" and self.action ~= "jab" and self.action ~= "hook" and self.action ~= "strike" then
-      if self.action == "walk" and self.direction == "right" then
-        self.body:applyLinearImpulse(1000, -3000)
-      elseif self.action == "walk" and self.direction == "left" then
-        self.body:applyLinearImpulse(-1000, -3000)
-      else
-        self.body:applyLinearImpulse(0, -3000)
-      end
-      self.action = "jump"
-    end
+    self.nextAction = "jump"
   end
 end

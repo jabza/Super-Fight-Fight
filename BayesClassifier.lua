@@ -31,6 +31,7 @@ function BayesClassifier:classify(trainingData, testData)
     end
   end
 
+  --Pick the best probability.
   result = ""
   maxProb = 0
   for classification, probability in pairs(probabilities) do

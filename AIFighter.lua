@@ -70,6 +70,7 @@ function AIFighter:initialize(positionX, positionY, health, stamina)
   --Create the rules-based Expert System. NOTE: This system is updated in the Fighter class - processNextAction().
   self.expert = ExpertSystem:new()
 
+  --Used to stop the AI idling in offence mode.
   self.offenceCombatTimer = 0
   self.offenceBlockThresh = 1
 end
